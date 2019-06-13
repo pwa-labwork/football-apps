@@ -20,6 +20,127 @@
 
         <script src="/assets/js/materialize.min.js"></script>
         <script src="/assets/js/component.js"></script>
+        <script>
+                    
+            let url = window.location.search;
+            document.addEventListener("DOMContentLoaded", function() {
+                
+                // Call Sidebar Component
+                let nav = document.querySelector("#nav"),
+                    body = document.querySelector("#content")
 
+                ajax.get("/component/navigation.html", function(res) {
+                    nav.innerHTML = res
+                    // Set Item Menu
+                    document.querySelectorAll(".topnav, .sidenav").forEach(function(elm, key) {
+                        db.nav.data.forEach(function(item) {
+                            elm.appendChild(db.nav.template(item))
+                        })
+
+                        // Set Mobile Navbar Effect
+                        if(key == 1) {
+                            M.Sidenav.init(elm);
+                        }
+                    });
+
+                    // Default Pages
+                    if (url == "") {
+                        ajax.get("/pages/klasemen.html", function(resPage) {
+                            body.innerHTML = resPage
+
+                            klasemenHandler()
+                        })
+                    }
+                    else {
+                        let pages = url.substr(1);
+                        pages = pages.split("&");
+                        pages = pages[0].split("=");
+                        pages = pages[1];
+                        
+                        // Call Page
+                        ajax.get("/pages/" + pages + ".html", function(resPage) {
+                            body.innerHTML = resPage
+
+                            if (pages == "klasemen") {
+                                klasemenHandler()
+                            }
+                            else if(pages == "team") {
+                                showTeam()
+                            }
+                        })
+                    }
+
+                    // Set Action For Item Menu
+                    document.querySelectorAll(".sidenav a, .topnav a").forEach(function(elm) {
+                        elm.addEventListener("click", function(event) {
+                            // Close Navbar
+                            var sidenav = document.querySelector(".sidenav");
+                            M.Sidenav.getInstance(sidenav).close();
+                        });
+                    });
+                })
+
+            })
+
+            function klasemenHandler() {
+                ajax.getData({
+                    url: "https://private-044be-dicodingfootball.apiary-mock.com/api/v1/json/1/all_leagues.php",
+                    headers: []
+                }, function(res) {
+                    try {
+                        res = JSON.parse(res);
+                        res = res.leagues;
+
+                        document.querySelector("#items").innerHTML = `${res.map((item) => 
+                            `<div class="col s12 m6" style="cursor: pointer" onclick='location.assign("?p=team&l=${item.strLeague}")'>
+                                <div class="card-panel teal">
+                                    <span class="white-text" style="font-size: 18px;">${item.strLeague}</span>    
+                                </div>    
+                            </div>`
+                        ).join('')}`
+                    } catch (error) {
+                        console.log("Error", error);
+                    }
+                });
+            }
+
+            function showTeam() {
+                
+                let name = url.substr(1);
+                name = name.split("&");
+                name = name[1].split("=");
+                name = name[1].split("%20").join(" ");
+
+                document.querySelector("#items-title").innerHTML = name;
+                ajax.getData({
+                    url: "https://private-044be-dicodingfootball.apiary-mock.com/api/v1/json/1/search_all_teams.php?l=" + name,
+                    headers: []
+                }, function(res) {
+                    try {
+                        res = JSON.parse(res);
+                        res = res.teams;
+
+                        document.querySelector("#items").innerHTML = `${res.map((item) => 
+                            `<div class="col s12 m6">
+                                <div class="card">
+                                    <div class="card-image" style="height: 180px">
+                                    <img src="${item.strTeamLogo}">
+                                    <span class="card-title">${item.strTeam}</span>
+                                    </div>
+                                    <div class="card-content">
+                                    <p>${item.strDescriptionEN.length > 100 ? item.strDescriptionEN.substring(0, 100): item.strDescriptionEN}...</p>
+                                    </div>
+                                    <div class="card-action">
+                                    <a href="#">Selengkapnya</a>
+                                    </div>
+                                </div>
+                            </div>`
+                        ).join('')}`
+                    } catch(error) {
+                        console.log("Error", error);
+                    }
+                })
+            }
+        </script>
     </body>
 </html>

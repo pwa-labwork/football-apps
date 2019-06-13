@@ -15,7 +15,25 @@ ajax.get = function(url, callback) {
     xhttp.send();
 }
 
-// AJAX POST
+// AJAX GET WITH DATA
+ajax.getData = function(req, callback) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status != 200) return;
+    
+            // Muat daftar tautan menu
+            callback(xhttp.responseText)
+        }
+    };
+    xhttp.open("GET", req.url, true);
+    
+    req.headers.forEach(function(item) {
+        xhttp.setRequestHeader(item.key, item.value);
+    })
+
+    xhttp.send();
+}
 
 // DB NAV
 db.nav = {}
@@ -27,15 +45,14 @@ db.nav.template = function(item) {
         a = document.createElement("a")
     
     a.appendChild(document.createTextNode(item.text))
-    a.setAttribute("href", item.href)
+    a.setAttribute("href", "?p=" + item.href)
     li.appendChild(a)
     return li
 }
 
 // DB NAV DATA
 db.nav.data = [
-    {href: "#vertebrata", text: "Vertebrata"},
-    {href: "#avertebrata", text: "Avetebrata"},
-    {href: "#about", text: "About"},
-    {href: "#contact-us", text: "Contact Us"}
+    {href: "klasemen", text: "Klasemen Liga"},
+    {href: "about", text: "About"},
+    {href: "contact-us", text: "Contact Us"}
 ]
