@@ -67,6 +67,9 @@
                             else if(pages == "team") {
                                 showTeam()
                             }
+                            else if(pages == "detail") {
+                                showDetail()
+                            }
                         })
                     }
 
@@ -131,7 +134,50 @@
                                     <p>${item.strDescriptionEN.length > 100 ? item.strDescriptionEN.substring(0, 100): item.strDescriptionEN}...</p>
                                     </div>
                                     <div class="card-action">
-                                    <a href="#">Selengkapnya</a>
+                                    <a href="?p=detail&id=${item.idTeam}">Selengkapnya</a>
+                                    </div>
+                                </div>
+                            </div>`
+                        ).join('')}`
+                    } catch(error) {
+                        console.log("Error", error);
+                    }
+                })
+            }
+        
+            function showDetail() {
+                let name = url.substr(1);
+                name = name.split("&");
+                name = name[1].split("=");
+                name = name[1];
+
+                ajax.getData({
+                    url: "https://private-044be-dicodingfootball.apiary-mock.com/api/v1/json/1/lookupteam.php?id=" + name,
+                    headers: []
+                }, function(res) {
+                    try {
+                        res = JSON.parse(res);
+                        res = res.teams;
+
+                        document.querySelector("#items-title").innerHTML = res[0].strTeam;
+
+                        document.querySelector("#items").innerHTML = `${res.map((item) => 
+                            `<div class="col s12 m5">
+                                <div class="card">
+                                    <div class="card-image" style="height: 180px">
+                                    <img src="${item.strTeamLogo}">
+                                    <span class="card-title">${item.strTeam}</span>
+                                    </div>
+                                    <div class="card-action">
+                                    <a href="?p=detail&id=${item.idTeam}">Add To Favorite</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col s12 m7">
+                                <div class="card">
+                                    <div class="card-content">
+                                    <span class="card-title">${item.strTeam}</span>
+                                    <p>${item.strDescriptionEN}.</p>
                                     </div>
                                 </div>
                             </div>`
