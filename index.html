@@ -19,9 +19,50 @@
         <div id="content"></div>
 
         <script src="/assets/js/materialize.min.js"></script>
+        <script src="/assets/js/idb.js"></script>
         <script src="/assets/js/component.js"></script>
         <script>
-                    
+            // REGISTER SERVICE WORKER
+            if ("serviceWorker" in navigator) {
+                window.addEventListener("load", function() {
+                navigator.serviceWorker
+                    .register("/service-worker.js")
+                    .then(function() {
+                        console.log("Pendaftaran ServiceWorker berhasil");
+                    })
+                    .catch(function() {
+                        console.log("Pendaftaran ServiceWorker gagal");
+                    });
+                });
+
+                // NOTIFICATION
+                if ('Notification' in window) {
+                    Notification.requestPermission().then(function (result) {
+                        if (result === "denied") {
+                            console.log("Fitur notifikasi tidak diijinkan.");
+                        return;
+                        } else if (result === "default") {
+                            console.error("Pengguna menutup kotak dialog permintaan ijin.");
+                            return;
+                        }
+                        
+                        if (('PushManager' in window)) {
+                            navigator.serviceWorker.getRegistration().then(function(reg) {
+                                reg.pushManager.subscribe({
+                                    userVisibleOnly: true
+                                }).then(function(sub) {
+                                    console.log('Berhasil melakukan subscribe dengan endpoint: ', sub.endpoint);
+                                }).catch(function(e) {
+                                    console.error('Tidak dapat melakukan subscribe ', e);
+                                });
+                            });
+                        }
+                    });
+                }
+            } else {
+                console.log("ServiceWorker belum didukung browser ini.");
+            }
+
             let url = window.location.search;
             document.addEventListener("DOMContentLoaded", function() {
                 
@@ -48,7 +89,10 @@
                         ajax.get("/pages/klasemen.html", function(resPage) {
                             body.innerHTML = resPage
 
-                            klasemenHandler()
+                            if (navigator.onLine) {
+                                klasemenHandler()
+                            }
+                            else showFavoriteTeam()
                         })
                     }
                     else {
@@ -87,7 +131,7 @@
 
             function klasemenHandler() {
                 ajax.getData({
-                    url: "https://private-044be-dicodingfootball.apiary-mock.com/api/v1/json/1/all_leagues.php",
+                    url: "https://www.thesportsdb.com/api/v1/json/1/all_leagues.php",
                     headers: []
                 }, function(res) {
                     try {
@@ -108,7 +152,6 @@
             }
 
             function showTeam() {
-                
                 let name = url.substr(1);
                 name = name.split("&");
                 name = name[1].split("=");
@@ -116,7 +159,7 @@
 
                 document.querySelector("#items-title").innerHTML = name;
                 ajax.getData({
-                    url: "https://private-044be-dicodingfootball.apiary-mock.com/api/v1/json/1/search_all_teams.php?l=" + name,
+                    url: "https://www.thesportsdb.com/api/v1/json/1/search_all_teams.php?l=" + name,
                     headers: []
                 }, function(res) {
                     try {
@@ -145,44 +188,159 @@
                 })
             }
         
+            var dbIndex = idb.open("footballApps", 1, function(upgradeDB) {
+                if (!upgradeDB.objectStoreNames.contains("footballFavorite")) {
+                    var footballFavorite = upgradeDB.createObjectStore("footballFavorite", {keyPath: "id"});
+                    // footballFavorite.createIndex("name", "name", {unique: false});
+                    // footballFavorite.createIndex("description", "description", {unique: false});
+                    // footballFavorite.createIndex("logo", "logo", {unique: false});
+                }
+            })
+
             function showDetail() {
                 let name = url.substr(1);
                 name = name.split("&");
                 name = name[1].split("=");
                 name = name[1];
 
-                ajax.getData({
-                    url: "https://private-044be-dicodingfootball.apiary-mock.com/api/v1/json/1/lookupteam.php?id=" + name,
-                    headers: []
-                }, function(res) {
-                    try {
-                        res = JSON.parse(res);
-                        res = res.teams;
+                dbIndex.then(function(database) {
+                    var tx = database.transaction(['footballFavorite'], 'readonly');
+                    var store = tx.objectStore('footballFavorite');
+                    return store.get(parseInt(name))
+                }).then(function(val) {
+                    if (typeof val == "undefined") {
+                        ajax.getData({
+                            url: "https://www.thesportsdb.com/api/v1/json/1/lookupteam.php?id=" + name,
+                            headers: []
+                        }, function(res) {
+                            try {
+                                res = JSON.parse(res);
+                                res = res.teams;
 
-                        document.querySelector("#items-title").innerHTML = res[0].strTeam;
+                                document.querySelector("#items-title").innerHTML = res[0].strTeam;
 
-                        document.querySelector("#items").innerHTML = `${res.map((item) => 
-                            `<div class="col s12 m5">
+                                document.querySelector("#items").innerHTML = `${res.map((item) => 
+                                    `<div class="col s12 m5">
+                                        <div class="card">
+                                            <div class="card-image" style="height: 180px">
+                                            <img src="${item.strTeamLogo}">
+                                            <span class="card-title">${item.strTeam}</span>
+                                            </div>
+                                            <div class="card-action">
+                                            <button type="button" onclick="addToFavorite(${item.idTeam})" id="favorite">Add To Favorite</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col s12 m7">
+                                        <div class="card">
+                                            <div class="card-content">
+                                            <span class="card-title">${item.strTeam}</span>
+                                            <p>${item.strDescriptionEN}.</p>
+                                            </div>
+                                        </div>
+                                    </div>`
+                                ).join('')}`
+                            } catch(error) {
+                                console.log("Error", error);
+                            }
+                        })
+                    }
+                    else {
+                        document.querySelector("#items-title").innerHTML = val.nama;
+
+                        document.querySelector("#items").innerHTML = `
+                            <div class="col s12 m5">
                                 <div class="card">
                                     <div class="card-image" style="height: 180px">
-                                    <img src="${item.strTeamLogo}">
-                                    <span class="card-title">${item.strTeam}</span>
+                                    <img src="${val.logo}">
+                                    <span class="card-title">${val.nama}</span>
                                     </div>
                                     <div class="card-action">
-                                    <a href="?p=detail&id=${item.idTeam}">Add To Favorite</a>
+                                    <button type="button" onclick="removeFromFavorite(${val.id})" id="favorite">Remove From Favorite</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="col s12 m7">
                                 <div class="card">
                                     <div class="card-content">
-                                    <span class="card-title">${item.strTeam}</span>
-                                    <p>${item.strDescriptionEN}.</p>
+                                    <span class="card-title">${val.nama}</span>
+                                    <p>${val.description}.</p>
                                     </div>
                                 </div>
                             </div>`
-                        ).join('')}`
-                    } catch(error) {
+                    }
+                })
+            }
+
+            function showFavoriteTeam() {
+                document.querySelector("#items-title").innerHTML = "Favorite Team";
+                dbIndex.then(function(database) {
+                    var tx = database.transaction(['footballFavorite'], 'readonly');
+                    var store = tx.objectStore('footballFavorite');
+                    return store.getAll()
+                }).then(function(val) {
+
+                    console.log(val)
+
+                    document.querySelector("#items").innerHTML = `${val.map((item) => 
+                        `<div class="col s12 m6">
+                            <div class="card">
+                                <div class="card-image" style="height: 180px">
+                                <img src="${item.logo}">
+                                <span class="card-title">${item.nama}</span>
+                                </div>
+                                <div class="card-content">
+                                <p>${item.description.length > 100 ? item.description.substring(0, 100): item.description}...</p>
+                                </div>
+                                <div class="card-action">
+                                <a href="?p=detail&id=${item.id}">Selengkapnya</a>
+                                </div>
+                            </div>
+                        </div>`
+                    ).join('')}`
+                    
+                })
+            }
+
+            function removeFromFavorite(item) {
+                dbIndex.then(function(database) {
+                    var tx = database.transaction(['footballFavorite'], 'readwrite');
+                    var store = tx.objectStore('footballFavorite');
+                    store.delete(item)
+                    return store.complete
+                }).then(function() {
+                    location.assign(location.href)
+                });
+            }
+
+            function addToFavorite(item) {
+                ajax.getData({
+                    url: "https://www.thesportsdb.com/api/v1/json/1/lookupteam.php?id=" + item,
+                    headers: []
+                }, function(res) {
+                    try {
+                        res = JSON.parse(res);
+                        res = res.teams[0];
+                        dbIndex.then(function(database) {
+                            var tx = database.transaction(['footballFavorite'], 'readwrite');
+                            var store = tx.objectStore('footballFavorite');
+
+                            let id = parseInt(res.idTeam);
+
+                            var data = {
+                                'id': id,
+                                'nama': res.strTeam,
+                                'description': res.strDescriptionEN,
+                                'logo': res.strTeamLogo
+                            }
+                            store.add(data)
+                            return tx.complete;
+                        }).then(function() {
+                            location.assign(location.href)
+                        }).catch(function() {
+                            console.log('Tim gagal disimpan.')
+                        })
+                    }catch(error) {
                         console.log("Error", error);
                     }
                 })

@@ -1,0 +1,7 @@
+https://fcm.googleapis.com/fcm/send/eRSEF1DmB5U:APA91bHF_JbFZMlV8YGzU-YGTKSEVs5lDDGjoOZtnOoRzmggXusyDzUh3yOK0l_UrmZdg0FYPx0M73sDTIh9p48crAMfuPO010-2QLY4ro5cp4612zkbfgHWftNmwZlErXoUuFNfG9a6
+
+
+AAAAz3git0M:APA91bF6UNNsBh-m0WeRGLKzkDxvHhzSL6NsNQiSvJMXzAa7M5eZVp4ds3J8bIr0XzMgcjZoGq_7LFc3A5W0NpSposYqVl5m1E3fw4JLrhHdjj31iz4jD51Llz09KmXAjP9FjUqdTQ2h
+
+
+curl "https://fcm.googleapis.com/fcm/send/eRSEF1DmB5U:APA91bHF_JbFZMlV8YGzU-YGTKSEVs5lDDGjoOZtnOoRzmggXusyDzUh3yOK0l_UrmZdg0FYPx0M73sDTIh9p48crAMfuPO010-2QLY4ro5cp4612zkbfgHWftNmwZlErXoUuFNfG9a6" --request POST --header "TTL: 60" --header "Content-Length: 0" \ --header "Authorization: key=AAAAz3git0M:APA91bF6UNNsBh-m0WeRGLKzkDxvHhzSL6NsNQiSvJMXzAa7M5eZVp4ds3J8bIr0XzMgcjZoGq_7LFc3A5W0NpSposYqVl5m1E3fw4JLrhHdjj31iz4jD51Llz09KmXAjP9FjUqdTQ2h"
