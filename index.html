@@ -105,14 +105,22 @@
                         ajax.get("/pages/" + pages + ".html", function(resPage) {
                             body.innerHTML = resPage
 
-                            if (pages == "klasemen") {
-                                klasemenHandler()
+                            if (navigator.onLine) {
+                                if (pages == "klasemen") {
+                                    klasemenHandler()
+                                }
+                                else if(pages == "team") {
+                                    showTeam()
+                                }
+                                else if(pages == "detail") {
+                                    showDetail()
+                                }
                             }
-                            else if(pages == "team") {
-                                showTeam()
-                            }
-                            else if(pages == "detail") {
-                                showDetail()
+                            else {
+                                if(pages == "detail") {
+                                    showDetail()
+                                }
+                                else showFavoriteTeam();
                             }
                         })
                     }
