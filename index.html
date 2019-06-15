@@ -64,6 +64,21 @@
             }
 
             let url = window.location.search;
+        
+            var dbIndex = idb.open("footballApps", 1, function(upgradeDB) {
+                if (!upgradeDB.objectStoreNames.contains("footballFavorite")) {
+                    var footballFavorite = upgradeDB.createObjectStore("footballFavorite", {keyPath: "id"});
+                    // footballFavorite.createIndex("name", "name", {unique: false});
+                    // footballFavorite.createIndex("description", "description", {unique: false});
+                    // footballFavorite.createIndex("logo", "logo", {unique: false});
+                }
+                if (!upgradeDB.objectStoreNames.contains("instalasiFavorite")) {
+                    var footballFavorite = upgradeDB.createObjectStore("instalasiFavorite", {keyPath: "id"});
+                    // footballFavorite.createIndex("name", "name", {unique: false});
+                    // footballFavorite.createIndex("description", "description", {unique: false});
+                    // footballFavorite.createIndex("logo", "logo", {unique: false});
+                }
+            })
             document.addEventListener("DOMContentLoaded", function() {
                 
                 // Call Sidebar Component
@@ -92,7 +107,10 @@
                             if (navigator.onLine) {
                                 klasemenHandler()
                             }
-                            else showFavoriteTeam()
+                            else {
+                                instalasiFavorite()
+                                showFavoriteTeam()
+                            }
                         })
                     }
                     else {
@@ -120,7 +138,10 @@
                                 if(pages == "detail") {
                                     showDetail()
                                 }
-                                else showFavoriteTeam();
+                                else {
+                                    instalasiFavorite()
+                                    showFavoriteTeam();
+                                }
                             }
                         })
                     }
@@ -195,15 +216,6 @@
                     }
                 })
             }
-        
-            var dbIndex = idb.open("footballApps", 1, function(upgradeDB) {
-                if (!upgradeDB.objectStoreNames.contains("footballFavorite")) {
-                    var footballFavorite = upgradeDB.createObjectStore("footballFavorite", {keyPath: "id"});
-                    // footballFavorite.createIndex("name", "name", {unique: false});
-                    // footballFavorite.createIndex("description", "description", {unique: false});
-                    // footballFavorite.createIndex("logo", "logo", {unique: false});
-                }
-            })
 
             function showDetail() {
                 let name = url.substr(1);
@@ -277,6 +289,55 @@
                                 </div>
                             </div>`
                     }
+                })
+            }
+
+            function instalasiFavorite() {
+                dbIndex.then(function(database) {
+                    var tx = database.transaction(['instalasiFavorite'], 'readwrite');
+                    var store = tx.objectStore('instalasiFavorite');
+                    return store.get(parseInt(0))
+                }).then(function(val) {
+                    if (typeof val == "undefined") {
+                        dbIndex.then(function(database) {
+                            var tx = database.transaction(['instalasiFavorite'], 'readwrite');
+                            var store = tx.objectStore('instalasiFavorite');
+                            var data = {
+                                id: 0
+                            }
+                            store.add(data)
+                            return store.complete;
+                        }).then(function() {
+                            var data = [{
+                                'id': 133601,
+                                'nama': "Aston Villa",
+                                'description': `Aston Villa Football Club (/ˈæstən ˈvɪllə/; also known as Villa, The Villa, The Villans, The Lions) are a professional football club based in Witton, Birmingham, who play in the Premier League, the highest level of English football. Founded in 1874, they have played at their current home ground, Villa Park, since 1897. Aston Villa were founder members of The Football League in 1888. They were also founder members of the Premier League in 1992, and have remained there ever since. The club were floated by the previous owner and chairman Doug Ellis, but in 2006 full control was acquired by American businessman Randy Lerner. Lerner announced on 12 May 2014 that he is selling the club. Aston Villa are among the oldest and the most successful football clubs in the history of English football. Villa won the 1981–82 European Cup, and are thus one of five English clubs to win what is now the UEFA Champions League. They have the fourth highest total of major honours won by an English club, having won the First Division Championship seven times (most recently in the 1980–81 season), the FA Cup seven times (last won in 1957), the Football League Cup five times (last won in 1996) and the UEFA Super Cup in 1982. The club have also produced more England national team players than any other side, currently having produced 72. They have a fierce local rivalry with Birmingham City. The Second City derby between Aston Villa and Birmingham City has been played since 1879. The club's traditional kit colours are claret shirts with sky blue sleeves, white shorts and sky blue socks. Their traditional badge is of a rampant gold lion on a light blue background with the club's motto "Prepared" underneath; a modified version of this was adopted in 2007.`,
+                                'logo': "https://www.thesportsdb.com/images/media/team/logo/wtsxus1424375522.png"
+                            },{
+                                'id': 133604,
+                                'nama': "Arsenal",
+                                'description': `"Arsenal Football Club is a professional football club based in Holloway, London which currently plays in the Premier League, the highest level of English football. One of the most successful clubs in English football, they have won 13 First Division and Premier League titles and a joint record 11 FA Cups. Arsenal's success has been particularly consistent: the club has accumulated the second most points in English top-flight football, hold the ongoing record for the longest uninterrupted period in the top flight, and would be placed first in an aggregated league of the entire 20th century. Arsenal is the second side to complete an English top-flight season unbeaten (in the 2003–04 season), playing almost twice as many matches as the previous invincibles Preston North End in the 1888–89 season. Arsenal was founded in 1886 in Woolwich and in 1893 became the first club from the south of England to join the Football League. In 1913, they moved north across the city to Arsenal Stadium in Highbury. In the 1930s, they won five League Championship titles and two FA Cups. After a lean period in the post-war years they won the League and FA Cup Double, in the 1970–71 season, and in the 1990s and first decade of the 21st century, won two more Doubles and reached the 2006 UEFA Champions League Final. Since neighbouring Tottenham Hotspur, the two clubs have had a fierce rivalry, the North London derby. Arsenal have one of the highest incomes and largest fanbases in the world. The club was named the fifth most valuable association football club in the world, valued at £1.3 billion in 2014."`,
+                                'logo': "https://www.thesportsdb.com/images/media/team/logo/q2mxlz1512644512.png"
+                            }]
+                            data.forEach(function(item, key){
+                                dbIndex.then(function(database) {
+                                    var tx = database.transaction(['footballFavorite'], 'readwrite');
+                                    var store = tx.objectStore('footballFavorite');
+
+                                    let id = parseInt(item.id);
+                                    
+                                    store.add(item)
+                                    return tx.complete;
+                                }).then(function() {
+                                    if (key == 1) {
+                                        location.assign(location.href)
+                                    }
+                                })
+                            })
+                        })
+                    }
+                }).catch(function() {
+                    console.log('Tim gagal disimpan.')
                 })
             }
 
