@@ -53,6 +53,7 @@ db.nav.template = function(item) {
 // DB NAV DATA
 db.nav.data = [
     {href: "klasemen", text: "Klasemen Liga"},
+    {href: "favorite", text: "Favorite"},
     {href: "about", text: "About"},
     {href: "contact-us", text: "Contact Us"}
 ]
